@@ -20,9 +20,9 @@ if __name__ == '__main__':
           help='batch size for training')
      parser.add_argument('-l', '--latent', type=int, default=500, 
           help='vae latent dimension size')
-     parser.add_argument('-d', '--dec_dim', type=int, default=1, 
-          help='dimension of the decision outcome')
-     parser.add_argument('-ds', '--dec_size', type=int, default=100, 
+     parser.add_argument('-d', '--cat_dim', type=int, default=1, 
+          help='dimension of the category outcome')
+     parser.add_argument('-c', '--cat_size', type=int, default=100, 
           help='number of the decision model units')
      parser.add_argument('-b', '--beta', type=float, default=0.0025, 
           help='value of parameter beta (multiplied with KL divergence)')
@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
      vae = train_model(args.path,args.train,args.num_epochs,\
           args.batch_size,args.variance,args.weight,args.beta,\
-          args.learning_rate,args.latent,args.dec_dim,args.dec_size)
+          args.learning_rate,args.latent,args.cat_dim,args.cat_size)
      if args.plot_data == True:
           plot_recon_dec(vae,args.per_enc1)
      if args.analyze_data == True:
