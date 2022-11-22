@@ -6,6 +6,7 @@ This experiment modeled how human listeners can flexibly weight the speech featu
 
 ![plot](./figs/me_vae.jpeg) 
 
+## Dependencies
 The dependencies needed to run this code:<br/>
 `tensorflow`<br/>
 `keras`<br/>
@@ -16,10 +17,11 @@ The dependencies needed to run this code:<br/>
 `pandas`<br/>
 `matplotlib`<br/>
 
-
+## Run Experiment
 To run the entire experiment, run:
 `python main.py`
 
+## Optional Arguments
 The flags/arguments are set by default as those used in the experiment. You can manually change them:
 
 optional arguments:   <br/>
@@ -56,9 +58,10 @@ optional arguments:   <br/>
 ` -ad {True,False}, --analyze_data {True,False} ` <br/>
 &emsp; &emsp;  analyze the data? <br/>
 
+
+## Using pretrained model
 To run just the analysis and plot the data with an already trained model, run:
 `python main.py -t=False`
-
 
 To bypass plotting the data:
 `python main.py -pd=False`
