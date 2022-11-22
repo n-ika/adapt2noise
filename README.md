@@ -22,40 +22,39 @@ To run the entire experiment, run:
 
 The flags/arguments are set by default as those used in the experiment. You can manually change them:
 
-optional arguments:  
+optional arguments:   <br/>
 ` -h, --help           ` <br/>
-&emsp; &emsp;  show this help message and exit  
+&emsp; &emsp;  show this help message and exit   <br/>
 ` -t {True,False}, --train {True,False} ` <br/>
-&emsp; &emsp;  train the model from scratch; if false will load weights
+&emsp; &emsp;  train the model from scratch; if false will load weights <br/>
 ` -p PATH, --path PATH` <br/>
-&emsp; &emsp;  name the path for saving or loading model weights
+&emsp; &emsp;  name the path for saving or loading model weights <br/>
 ` -e NUM_EPOCHS, --num_epochs NUM_EPOCHS` <br/>
-&emsp; &emsp;  number of epochs to train the model
+&emsp; &emsp;  number of epochs to train the model <br/>
 ` -bs BATCH_SIZE, --batch_size BATCH_SIZE` <br/>
-&emsp; &emsp;  batch size for training  
+&emsp; &emsp;  batch size for training   <br/>
 ` -l LATENT, --latent LATENT ` <br/>
-&emsp; &emsp;  vae latent dimension size  
+&emsp; &emsp;  vae latent dimension size   <br/>
 ` -d CAT_DIM, --cat_dim CAT_DIM ` <br/>
-&emsp; &emsp;  dimension of the category outcome  
+&emsp; &emsp;  dimension of the category outcome   <br/>
 ` -c CAT_SIZE, --cat_size CAT_SIZE ` <br/>
-&emsp; &emsp;  number of the decision model units  
+&emsp; &emsp;  number of the decision model units   <br/>
 ` -b BETA, --beta BETA ` <br/>
-&emsp; &emsp;  value of parameter beta (multiplied with KL divergence)   
+&emsp; &emsp;  value of parameter beta (multiplied with KL divergence)    <br/>
 ` -w WEIGHT, --weight WEIGHT ` <br/>
-&emsp; &emsp;  weight of the upweighted feature, downweighted feature is 1-w 
+&emsp; &emsp;  weight of the upweighted feature, downweighted feature is 1-w  <br/>
 ` -lr LEARNING_RATE, --learning_rate LEARNING_RATE ` <br/>
-&emsp; &emsp;  learning rate of the vae  
+&emsp; &emsp;  learning rate of the vae   <br/>
 ` -v {True,False}, --variance {True,False} ` <br/>
-&emsp; &emsp;  variance on one of the dimensions of the input - for each encoder, the variance is set on one unique dim  
+&emsp; &emsp;  variance on one of the dimensions of the input - for each encoder, the variance is set on one unique dim   <br/>
 ` -s SEED, --seed SEED ` <br/>
-&emsp; &emsp;  random seed for generating data  
+&emsp; &emsp;  random seed for generating data   <br/>
 ` -pe PER_ENC1, --per_enc1 PER_ENC1 ` <br/>
-&emsp; &emsp;  percentage of encoder 1 for weighting the information from the decision model; percentage of encoder 2 is 1-per_enc1  
+&emsp; &emsp;  percentage of encoder 1 for weighting the information from the decision model; percentage of encoder 2 is 1-per_enc1   <br/>
 ` -pd {True,False}, --plot_data {True,False} ` <br/>
-&emsp; &emsp;  plot the data?  
+&emsp; &emsp;  plot the data?   <br/>
 ` -ad {True,False}, --analyze_data {True,False} ` <br/>
-&emsp; &emsp;  analyze the data?
-
+&emsp; &emsp;  analyze the data? <br/>
 
 To run just the analysis and plot the data with an already trained model, run:
 `python main.py -t=False`
