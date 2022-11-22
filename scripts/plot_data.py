@@ -5,7 +5,6 @@ import pandas as pd
 from scipy import stats
 from sklearn.utils import shuffle
 from itertools import product
-import seaborn as sns
 from me_vae import *
 from util_fun import *
 
