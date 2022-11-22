@@ -6,7 +6,7 @@ This experiment modeled how human listeners can flexibly weight the speech featu
 
 ![plot](./figs/me_vae.jpeg) 
 
-The dependencies needed to run this code:
+The dependencies needed to run this code:<br/>
 `tensorflow`<br/>
 `keras`<br/>
 `itertools`<br/>
@@ -23,38 +23,38 @@ To run the entire experiment, run:
 The flags/arguments are set by default as those used in the experiment. You can manually change them:
 
 optional arguments:  
- -h, --help            
-&emsp;  show this help message and exit  
- -t {True,False}, --train {True,False}  
-&emsp;  train the model from scratch; if false will load weights
- -p PATH, --path PATH 
-&emsp;  name the path for saving or loading model weights
- -e NUM_EPOCHS, --num_epochs NUM_EPOCHS 
-&emsp;  number of epochs to train the model
- -bs BATCH_SIZE, --batch_size BATCH_SIZE 
-&emsp;  batch size for training  
- -l LATENT, --latent LATENT  
-&emsp;  vae latent dimension size  
- -d CAT_DIM, --cat_dim CAT_DIM  
-&emsp;  dimension of the category outcome  
- -c CAT_SIZE, --cat_size CAT_SIZE  
-&emsp;  number of the decision model units  
- -b BETA, --beta BETA  
-&emsp;  value of parameter beta (multiplied with KL divergence)   
- -w WEIGHT, --weight WEIGHT  
-&emsp;  weight of the upweighted feature, downweighted feature is 1-w 
- -lr LEARNING_RATE, --learning_rate LEARNING_RATE  
-&emsp;  learning rate of the vae  
- -v {True,False}, --variance {True,False}  
-&emsp;  variance on one of the dimensions of the input - for each encoder, the variance is set on one unique dim  
- -s SEED, --seed SEED  
-&emsp;  random seed for generating data  
- -pe PER_ENC1, --per_enc1 PER_ENC1  
-&emsp;  percentage of encoder 1 for weighting the information from the decision model; percentage of encoder 2 is 1-per_enc1  
- -pd {True,False}, --plot_data {True,False}  
-&emsp;  plot the data?  
- -ad {True,False}, --analyze_data {True,False}  
-&emsp;  analyze the data?
+` -h, --help           ` <br/>
+&emsp; &emsp;  show this help message and exit  
+` -t {True,False}, --train {True,False} ` <br/>
+&emsp; &emsp;  train the model from scratch; if false will load weights
+` -p PATH, --path PATH` <br/>
+&emsp; &emsp;  name the path for saving or loading model weights
+` -e NUM_EPOCHS, --num_epochs NUM_EPOCHS` <br/>
+&emsp; &emsp;  number of epochs to train the model
+` -bs BATCH_SIZE, --batch_size BATCH_SIZE` <br/>
+&emsp; &emsp;  batch size for training  
+` -l LATENT, --latent LATENT ` <br/>
+&emsp; &emsp;  vae latent dimension size  
+` -d CAT_DIM, --cat_dim CAT_DIM ` <br/>
+&emsp; &emsp;  dimension of the category outcome  
+` -c CAT_SIZE, --cat_size CAT_SIZE ` <br/>
+&emsp; &emsp;  number of the decision model units  
+` -b BETA, --beta BETA ` <br/>
+&emsp; &emsp;  value of parameter beta (multiplied with KL divergence)   
+` -w WEIGHT, --weight WEIGHT ` <br/>
+&emsp; &emsp;  weight of the upweighted feature, downweighted feature is 1-w 
+` -lr LEARNING_RATE, --learning_rate LEARNING_RATE ` <br/>
+&emsp; &emsp;  learning rate of the vae  
+` -v {True,False}, --variance {True,False} ` <br/>
+&emsp; &emsp;  variance on one of the dimensions of the input - for each encoder, the variance is set on one unique dim  
+` -s SEED, --seed SEED ` <br/>
+&emsp; &emsp;  random seed for generating data  
+` -pe PER_ENC1, --per_enc1 PER_ENC1 ` <br/>
+&emsp; &emsp;  percentage of encoder 1 for weighting the information from the decision model; percentage of encoder 2 is 1-per_enc1  
+` -pd {True,False}, --plot_data {True,False} ` <br/>
+&emsp; &emsp;  plot the data?  
+` -ad {True,False}, --analyze_data {True,False} ` <br/>
+&emsp; &emsp;  analyze the data?
 
 
 To run just the analysis and plot the data with an already trained model, run:
