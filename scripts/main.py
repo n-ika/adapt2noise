@@ -23,7 +23,7 @@ if __name__ == '__main__':
      parser.add_argument('-d', '--cat_dim', type=int, default=1, 
           help='dimension of the category outcome')
      parser.add_argument('-c', '--cat_size', type=int, default=100, 
-          help='number of the decision model units')
+          help='number of the category model units')
      parser.add_argument('-b', '--beta', type=float, default=0.0025, 
           help='value of parameter beta (multiplied with KL divergence)')
      parser.add_argument('-w', '--weight', type=float, default=0.99, 

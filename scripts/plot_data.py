@@ -9,6 +9,22 @@ from me_vae import *
 from util_fun import *
 
 def plot_dec_boundary(all_points,decision,per_enc,enc_num):
+    """
+    Plots the decision boundary for the entire 7-step continuum of 
+    both dimensions, using one or both encoders in categorization.
+
+    Parameters
+    ----------
+    all_points : np array
+        all points of the 7 step continuum for VOT and for F0
+    decision : tf tensor
+        category decision based on one or a combination of encoders
+    per_enc : float
+        the percentage of using encoder's latent dimension in category mapping 
+        i.e. 10% 
+    enc_num : int
+        the encoder used (even if in combination, the other encoder is used 100-per_enc)
+    """
     dec_lbl = decision.numpy()
     dec_lbl[dec_lbl<0.5] = 0
     dec_lbl[dec_lbl>=0.5] = 1
@@ -25,6 +41,26 @@ def plot_dec_boundary(all_points,decision,per_enc,enc_num):
     return()
 
 def plot_recon(enc_num,stims_train,test_03,test_30,test_33,test_36,test_63,preds_03,preds_30,preds_33,preds_36,preds_63):
+    """
+    Plots the reconstruction of the training and test stimuli.
+
+    Parameters
+    ----------
+    enc_num : int
+        the encoder used (even if in combination, the other encoder is used 100-per_enc)
+    stims_train : np array
+        training data partially spanning the 7-step continuum for VOT and for F0
+    test_03, preds_03 : np array
+        test/prediction data with VOT index 0 and F0 index 3
+    test_30, preds_30 : np array
+        test/prediction data with VOT index 3 and F0 index 0
+    test_33, preds_33 : np array
+        test/prediction data with VOT index 3 and F0 index 3
+    test_36, preds_36 : np array
+        test/prediction data with VOT index 3 and F0 index 6
+    test_63, preds_63 : np array
+        test/prediction data with VOT index 6 and F0 index 3
+    """
     plt.figure(figsize=(15,15))
     plt.scatter(x=stims_train[:,0], y=stims_train[:,1], c="silver", alpha=0.5)
     plt.scatter(x=preds_36[:,0], y=preds_36[:,1], c="rosybrown", alpha=0.5)
@@ -47,6 +83,16 @@ def plot_recon(enc_num,stims_train,test_03,test_30,test_33,test_36,test_63,preds
     return()
 
 def plot_recon_dec(vae,per_enc1):
+    """
+    Builds the plotting data and calls the plotting functions.
+
+    Parameters
+    ----------
+    vae : tf model
+    per_enc1 : float
+        the percentage of using encoder's latent dimension in category mapping 
+        i.e. 10% 
+    """
     per_enc2 = 1 - per_enc1
 
     stims_train, labels_train = make_VAE_dataset(canonical=True, N=100)

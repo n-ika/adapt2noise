@@ -10,6 +10,20 @@ from keras.layers import Flatten
 from util_fun import *
 
 class Sampling(layers.Layer):
+    """
+    Sample latent variable z given the mean and log variance from the
+    last encoder's layer + reparametrization trick: mu + var*epsilon,
+    where epsilon is randomly taken from a normal distribution N(0,1)
+    
+    Parameters
+    ----------
+    layer : tf layer
+        layer containing mean and log variance
+    Returns
+    -------
+    z :
+        z = mu + var*epsilon
+    """
     def call(self, inputs):
         mu, z_log_var = inputs
         batch = tf.shape(mu)[0]
@@ -18,6 +32,22 @@ class Sampling(layers.Layer):
         return mu + tf.exp(0.5 * z_log_var) * epsilon
 
 def build_encoder(input_shape = (64,64,1), latent_dim = 500):
+    """
+    Build encoder with 2 convolutional 2D layers, 1 dense 2000 unit layer,
+    1 500 unit layer expressing the mean, 1 500 unit layer expressing the log
+    variance.
+    
+    Parameters
+    ----------
+    input_shape : tuple
+        shape of the input as a tuple
+    latent_dim : num
+        number of units for the latent dimension (mu, log_var and z will be this size)
+    Returns
+    -------
+    mu, z_log_var, z : layer
+        mu, z_log_var, z to be used by the decoder
+    """
     encoder_inputs = keras.Input(shape=(input_shape))
     x = layers.Conv2D(32, 3, activation="relu", strides=2, padding="same")(encoder_inputs)
     x = layers.Conv2D(64, 3, activation="relu", strides=2, padding="same")(x)
@@ -31,6 +61,21 @@ def build_encoder(input_shape = (64,64,1), latent_dim = 500):
     return(encoder)
 
 def build_decoder(latent_dim = 500, recall_dim = 2):
+    """
+    Build decoder with 1 dense 2 unit layer.
+    
+    Parameters
+    ----------
+    latent_dim : num
+        number of units of the encoder's latent dimension, input to the decoder
+    recall_dim : num
+        size of the 'recalled' output, which corresponds to the 2D summarized input,
+        containing i.e. only VOT and F0 values
+    Returns
+    -------
+    recall : layer
+        output of the recall_dim dimension
+    """
     latent_inputs = keras.Input(shape=(latent_dim))
     # bridge = tf.keras.layers.Dense(8 * 8 * 64, activation="relu")(latent_inputs)
     # bridge = tf.reshape(bridge, [-1, 8, 8, 64])
@@ -45,6 +90,22 @@ def build_decoder(latent_dim = 500, recall_dim = 2):
     return(decoder)
 
 def build_dec_model(input_dim=500, model_dim=100, dec_dim=1):
+    """
+    Build decoder with 1 dense 2 unit layer.
+    
+    Parameters
+    ----------
+    latent_dim : num
+        number of units of the encoder's latent dimension, input to the decoder
+    model_dim : num
+        size of the units in the dense layer
+    dec_dim : num
+        dimension of the ouput
+    Returns
+    -------
+    decision_sig : num
+        output, number between 0 and 1, denoting the decision between 2 categories
+    """
     latent_inputs = keras.Input(shape=(input_dim))
     decision_hidden = tf.keras.layers.Dense(model_dim,activation="relu",name="dec/decision_hidden")(latent_inputs)
     decision = tf.keras.layers.Dense(dec_dim,activation=None,name="dec/decision")(decision_hidden)
@@ -53,7 +114,30 @@ def build_dec_model(input_dim=500, model_dim=100, dec_dim=1):
     return(decision)
 
 class VAE(keras.Model):
+    """
+    Build VAE.
+    """
     def __init__(self, encoder1, encoder2, decoder, dec, cue_weights1, cue_weights2, beta=0.0025, **kwargs):
+        """
+        Initialize training.
+        
+        Parameters
+        ----------
+        encoder1 : tf model
+            initialized encoder 1 for the VAE with appropriate architecture
+        encoder2 : tf model
+            initialized encoder 2 for the VAE with appropriate architecture
+        decoder : tf model
+            initialized decoder for the VAE with appropriate architecture
+        dec : tf model
+            initialized category model for the VAE with appropriate architecture
+        cue_weights1 : np array
+            2D array for feature weights multiplied with the MSE of encoder 1
+        cue_weights2 : np array
+            2D array for feature weights multiplied with the MSE of encoder 2
+        beta : num
+            parameter beta, scaling the KL divergence of the loss term
+        """
         super(VAE, self).__init__(**kwargs)
         self.encoder1 = encoder1
         self.encoder2 = encoder2
@@ -85,6 +169,22 @@ class VAE(keras.Model):
         ]
 
     def train_step(self, all_data):
+        """
+        Training step.
+        
+        Parameters
+        ----------
+        all_data : list
+            list of input data: 
+            0 - ideal typically correlated data,
+            1 - data with more variance on F0 dimension
+            2 - data with more variance on VOT dimension
+            3 - category labels used to train the category model
+        Returns
+        -------
+        trackers : num
+            loss trackers containing the loss value for this training step
+        """
         data_true = all_data[0][0]
         data_fake1 = all_data[0][1]
         data_fake2 = all_data[0][2]
@@ -140,6 +240,44 @@ class VAE(keras.Model):
         }
 
 def train_model(path,train,num_epochs,batch_size,variance,weight,beta,lr,latent,dec_dim,dec_size):
+    """
+    Train the beta-ME-VAE model.
+    
+    Parameters
+    ----------
+    path : str
+        path to save newly trained model or to load the already trained one
+    train : bool
+        True if training the model, False if loading already trained one
+    num_epochs : num
+        number of epochs in training
+    batch_size : num
+        size of training batch
+    variance : bool
+        adding variance on one of the dimensions of the input data - if true,
+        will add variance on dimension 2 for encoder 1 and on dimension 1 for 
+        encoder 2, such that encoder 1 prioritizes dimension 1 and encoder 2
+        prioritizes dimension 2
+    weight : num
+        feature weight for the higher weighted dimension, lower weighted dimension
+        is 1-weight
+    beta : num
+        parameter beta, scaling the KL divergence of the loss term
+    lr : num
+        learning rate
+    latent : num
+        dimension of the size of the latent variable z (encoder's output and 
+        decoder's input)
+    dec_dim : num
+        dimension of the ouput
+    dec_size : num
+        size of the units in the dense layer
+
+    Returns
+    -------
+    vae : tf model
+        full VAE model, either newly trained or loaded
+    """
     stims_train, labels_train = make_VAE_dataset(canonical=True, N=100)
     opt = tf.keras.optimizers.Adagrad(lr,clipnorm=50.)
     cue_weights1 = np.array([weight, float(1-weight)]) # VOT emphasized

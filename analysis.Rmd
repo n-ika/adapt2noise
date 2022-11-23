@@ -1,0 +1,91 @@
+---
+title: "Untitled"
+output: html_document
+date: "2022-11-22"
+---
+
+```{r}
+library(dplyr)
+library(reshape2)
+library(plyr)
+library(ggplot2)
+library(gplots)
+```
+
+
+```{r}
+f <- read.csv('/Users/nika/Desktop/speech_in_noise/dec_model_acc.csv')
+f <- transform(
+  f, condition = as.character(condition))
+res = NULL
+for (cond in c('clear','noise')) {
+  for (subid in levels(as.factor(f$subject))){
+    f_sub <- subset(f, subject == subid & condition == cond)
+    cw <- lm(dec~f0 + vot, f_sub)
+    sum <- abs(round ( as.numeric (cw$coefficients[2]), digits = 3)) + abs( round ( as.numeric (cw$coefficients[3]), digits = 3))
+    iddur <-  abs(round ( as.numeric (cw$coefficients[2]), digits = 3))/sum
+    idspec <- abs(round ( as.numeric (cw$coefficients[3]), digits = 3))/sum
+    res <- rbind(res, c(subject = subid, cond, iddur, idspec))
+  }
+}
+
+res <- data.frame (res)
+colnames(res) <- c("Subject","Condition", "f0", "vot") 
+
+
+res2 <- melt(res, id.vars = c('Subject', 'Condition'), measure.vars = c('vot', 'f0'), variable.name = 'Dimension', value.name = 'weight')
+
+colnames(res2)[4] <- 'ave'
+res2$ave <- as.numeric(res2$ave)
+```
+
+```{r}
+# png('ViolinBox_model.png', units = 'in', width = 4, height = 4, res = 500)
+ggplot(res2, aes(Condition, ave, fill = Dimension))+
+  geom_violin(position = position_dodge(0.9), alpha = 0.5)+
+  geom_boxplot(width=0.1, position = position_dodge(0.9), alpha = 0.5)+
+  #geom_hline(yintercept = 0, linetype = 'dashed')+
+  scale_y_continuous(name = 'Dimension Weights')+
+  scale_x_discrete(name = NULL, label = c('Clear', 'Noise-vocoded'))+
+  scale_fill_manual(values = c('cyan', 'orange2'))+
+  #geom_text(aes(x = 1.3, y = 1.2, label = '*p < 0.001*', color = 'black', size = 3, hjust = 0.1))+
+  theme_bw()+
+  theme(plot.title = element_text(size = a+5, face = 'bold'), legend.position = 'none', legend.text = element_text( size = a, face = 'bold'), legend.title = element_text(size = a, face = 'bold'), axis.text.x = element_text(size = a, face = 'bold'), axis.text.y = element_text(size = a, face = 'bold'), axis.title = element_text(size = a, face = 'bold'))
+# dev.off()
+```
+
+```{r}
+t <- read.csv('/Users/nika/Desktop/speech_in_noise/test.csv')
+t <- read.csv('/Users/nika/Documents/UMD/Projects/adapt2noise/analysis.csv')
+
+t %>%
+  subset(f0 == 4) %>%
+  ddply(., ~subject+condition, summarise, vot_diff= diff(dec)) ->test_vot
+t %>%
+  subset(vot == 4) %>%
+  ddply(., ~subject+condition, summarise, f0_diff = diff(1-dec)) ->test_f0
+
+t %>%
+  subset(condition == 'clear' & f0 == 4) %>%
+  ddply(., ~subject+condition, summarise, accuracy = 1-accuracy) ->clear_acc
+
+t %>%
+  subset(condition == 'noise'& vot == 4) %>%
+  ddply(., ~subject+condition, summarise, accuracy = 1-accuracy) ->nv_acc
+
+merge(rbind(clear_acc, nv_acc), merge(test_vot, test_f0)) -> all_res
+```
+
+```{r}
+all_res %>% 
+  subset(condition=='noise') -> clear_diff 
+png('test_noise_f0.png', units = 'in', width = 6.5, height = 5, res = 500)
+ggplot(clear_diff, aes(accuracy, f0_diff))+
+  geom_point(color='rosybrown3', size = 4)+
+  geom_smooth(method = 'lm', color = 'black', alpha = 0.3)+
+  scale_y_continuous(name = 'Test Stimuli Response Difference', limits = c(-1.1, 1.1))+
+  scale_x_continuous(name = 'Reverse Block Exposure Trial Accuracy (Noise) - Dimension: F0', limits = c(0,1.1))+
+  # geom_text(x = 0.5, y = -0.3, label = 'r = -0.149, p=0.48', color = 'deep pink 4', size = fs-4)+
+  theme_bw()+
+  theme(axis.title.x = element_text(size = fs+2, face = 'bold'), axis.title.y = element_text(size = fs+2, face = 'bold'), axis.text.x = element_text(size = fs+2, face = 'bold'), axis.text.y = element_text(size = fs, face = 'bold'))
+dev.off()
