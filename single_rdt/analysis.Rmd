@@ -1,0 +1,220 @@
+---
+title: "ccn_analysis"
+output: html_document
+date: "2023-04-04"
+---
+
+
+```{r read data}
+setwd("/Users/nika/Documents/UMD/Projects/RDT_VAE/holt_dataset/SETSAT_Data")
+
+rm(list = ls())
+
+library(dplyr)
+library(reshape2)
+library(plyr)
+library(ggplot2)
+library(gplots)
+
+fs <- list.files(pattern = 'SetSat.*.csv')
+d1 <- rbind(read.csv(fs[1]), read.csv(fs[2]))
+```
+
+```{r}
+corp <- "timit"
+```
+
+
+```{r look at the baseline cue weights}
+d1 %>%
+  subset(Attempt == 1) %>%
+  select(Subject = Participant.Private.ID, Trial.Number, Response, Reaction.Time, Attempt, display, duration, spec, StimType, StimSubType, Block, Condition) -> ddd
+
+ddd %>%
+  subset(Block == 'Baseline') %>%
+  ddply(., ~Subject + Condition + duration + spec, summarise, perSAT = sum(Response == 'sat')/length(Response)) -> summ
+
+colnames(summ)[2] <- c('StimCategory')
+
+summ %>%
+  subset(StimCategory == 'Clear') %>%
+  ddply(., ~StimCategory+duration+spec, summarise, ave = mean(perSAT)) %>%
+  write.csv(., 'CHM.csv', row.names = FALSE)
+
+summ %>%
+  subset(StimCategory == 'Noise_vocoded') %>%
+  ddply(., ~StimCategory+duration+spec, summarise, ave = mean(perSAT)) %>%
+  write.csv(., 'NVHM.csv', row.names = FALSE)
+
+colnames(summ)[2] <- c('Condition')
+
+```
+
+
+```{r}
+
+wu <-read.csv('/Users/nika/Documents/UMD/Projects/adapt2noise/norm_test_wu.csv')
+
+buc_stepf <- wu$z_step_f1_buc[0:1]
+wsj_stepf <- wu$z_step_f1_wsj[0:1]
+timit_stepf <- wu$z_step_f1_timit[0:1]
+
+buc_stepd <- wu$z_step_dur_buc[0:1]
+wsj_stepd <- wu$z_step_dur_wsj[0:1]
+timit_stepd <- wu$z_step_dur_timit[0:1]
+
+for (x in 1:7) {
+summ %>% mutate(duration = replace(duration, duration == x, get(paste(corp,"_stepd",sep=""))*x))
+} -> summ
+
+for (x in 1:7) {
+summ %>% mutate(spec = replace(spec, spec == x, get(paste(corp,"_stepf",sep=""))*x))
+} -> summ
+
+summ<-dplyr::rename(summ, dur = duration)
+summ<-dplyr::rename(summ, f1 = spec)
+summ<-dplyr::rename(summ, choice = perSAT)
+```
+
+
+
+```{r}
+CWMatrix = NULL
+for (condition in c('Clear')) { #, 'Noise_vocoded'
+  for (subid in levels(as.factor(summ$Subject))){
+    f_sub <- subset(summ, Subject == subid & Condition == condition)
+    cw <- lm(choice~dur + f1, f_sub)
+    # cw <- glm(formula = choice~dur + f1, family = "binomial",
+    # data = f_sub)
+    sum <- abs(round ( as.numeric (cw$coefficients[2]), digits = 3)) + abs( round ( as.numeric (cw$coefficients[3]), digits = 3))
+    iddur <-  abs(round ( as.numeric (cw$coefficients[2]), digits = 3))/sum
+    idspec <- abs(round ( as.numeric (cw$coefficients[3]), digits = 3))/sum
+    CWMatrix <- rbind(CWMatrix, c(Subject = subid, condition, iddur, idspec))
+  }
+}
+CWMatrix <- data.frame (CWMatrix)
+colnames(CWMatrix) <- c("Subject","Condition", "Duration", "F1") 
+
+CWmatrix <- melt(CWMatrix, id.vars = c('Subject', 'Condition'), measure.vars = c('F1', 'Duration'), variable.name = 'Dimension', value.name = 'weight')
+
+colnames(CWmatrix)[4] <- 'ave'
+CWmatrix$ave <- as.numeric(CWmatrix$ave)
+```
+
+
+
+# ```{r}
+# B <- read.csv('/Users/nika/Documents/UMD/Projects/adapt2noise/dfs/w_0.9/an_buc.csv')
+# TM <- read.csv('/Users/nika/Documents/UMD/Projects/adapt2noise/dfs/w_0.9/an_timit.csv')
+# W <-read.csv('/Users/nika/Documents/UMD/Projects/adapt2noise/dfs/w_0.9/an_wsj.csv')
+# ```
+# 
+# ```{r}
+# B <- read.csv('/Users/nika/Documents/UMD/Projects/adapt2noise/dfs/w_1.0/an_buc.csv')
+# TM <- read.csv('/Users/nika/Documents/UMD/Projects/adapt2noise/dfs/w_1.0/an_timit.csv')
+# W <-read.csv('/Users/nika/Documents/UMD/Projects/adapt2noise/dfs/w_1.0/an_wsj.csv')
+# ```
+# 
+# 
+# ```{r}
+# B <- read.csv('/Users/nika/Documents/UMD/Projects/adapt2noise/analysis/dfs/w_1.0/test_buc.csv')
+# TM <- read.csv('/Users/nika/Documents/UMD/Projects/adapt2noise/analysis/dfs/w_1.0/test_timit.csv')
+# W <-read.csv('/Users/nika/Documents/UMD/Projects/adapt2noise/analysis/dfs/w_1.0/test_wsj.csv')
+# ```
+
+
+```{r}
+BASELINE <- read.csv(paste('/Users/nika/Documents/UMD/Projects/adapt2noise/analysis/dfs/w_1.0/test_',corp,'.csv',sep=""))
+ATTN <- read.csv(paste('/Users/nika/Documents/UMD/Projects/adapt2noise/analysis/dfs/w_0.9/test_',corp,'.csv',sep=""))
+```
+
+```{r}
+d <- CWmatrix
+d$Data <- "Humans"
+```
+
+
+```{r}
+f <- transform(
+  BASELINE, condition = as.character(condition))
+cond <- 'clear'
+res = NULL
+  for (subid in levels(as.factor(f$subject))){
+    f_sub <- subset(f, subject == subid)
+    cw <- lm(choice~f1 + dur, f_sub)
+    # cw <- glm(formula = dec~f1 + dur, family = "binomial", 
+    # data = f_sub)
+    sum <- abs(round ( as.numeric (cw$coefficients[2]), digits = 3)) + abs( round ( as.numeric (cw$coefficients[3]), digits = 3))
+    iddur <-  abs(round ( as.numeric (cw$coefficients[2]), digits = 3))/sum
+    idspec <- abs(round ( as.numeric (cw$coefficients[3]), digits = 3))/sum
+    res <- rbind(res, c(subject = subid, cond, iddur, idspec))
+  }
+
+
+res <- data.frame (res)
+colnames(res) <- c("Subject","Condition", "F1", "Duration") 
+
+res2 <- melt(res, id.vars = c('Subject', 'Condition'), measure.vars = c('Duration', 'F1'), variable.name = 'Dimension', value.name = 'weight')
+
+colnames(res2)[4] <- 'ave'
+res2$ave <- as.numeric(res2$ave)
+# res2$Dimension <- rev(res2$Dimension)
+# res2$Dimension <-as.factor(res2$Dimension)
+
+
+d1 <- res2
+d1$Data <- "Baseline"
+d <- rbind(d,d1)
+
+
+
+f <- transform(
+  ATTN, condition = as.character(condition))
+cond <- 'clear'
+res = NULL
+  for (subid in levels(as.factor(f$subject))){
+    f_sub <- subset(f, subject == subid)
+    cw <- lm(choice~f1 + dur, f_sub)
+    # cw <- glm(formula = dec~f1 + dur, family = "binomial", 
+    # data = f_sub)
+    sum <- abs(round ( as.numeric (cw$coefficients[2]), digits = 3)) + abs( round ( as.numeric (cw$coefficients[3]), digits = 3))
+    iddur <-  abs(round ( as.numeric (cw$coefficients[2]), digits = 3))/sum
+    idspec <- abs(round ( as.numeric (cw$coefficients[3]), digits = 3))/sum
+    res <- rbind(res, c(subject = subid, cond, iddur, idspec))
+  }
+
+
+res <- data.frame (res)
+colnames(res) <- c("Subject","Condition", "F1", "Duration") 
+
+res2 <- melt(res, id.vars = c('Subject', 'Condition'), measure.vars = c('Duration', 'F1'), variable.name = 'Dimension', value.name = 'weight')
+
+colnames(res2)[4] <- 'ave'
+res2$ave <- as.numeric(res2$ave)
+
+d1 <- res2
+d1$Data <- "Sel. attention"
+d <- rbind(d,d1)
+```
+
+
+
+```{r}
+a <- 15
+file_name <- paste('/Users/nika/Desktop/test_',corp,'.png', sep="")
+
+png(file_name, units = 'in', width = 5, height = 3, res = 500)
+ggplot(d, aes(x=factor(Data,level=c("Humans","Baseline","Sel. attention")),ave, fill = Dimension))+
+  geom_violin(width=1) + #,position = position_dodge(0.9), alpha = 0.5)+
+  #geom_boxplot(width=0.1, position = position_dodge(0.99), alpha = 0.5)+
+  #geom_line(aes(group = obs)) +
+  scale_y_continuous(name = 'Dimension Weights',limits = c(0,1))+
+  scale_x_discrete(name = NULL)+
+  theme_bw()+
+  scale_fill_manual(values = c('#3A63C7', '#FCBC64'),
+                    name="Feature",
+                    breaks=c("F1", "Duration"),
+                    labels=c("F1","Duration"))+
+  theme(plot.title = element_text(size = a+5, face = 'bold'), legend.position = 'top',legend.text = element_text( size = a, face = 'bold'), legend.title = element_text(size = a, face = 'bold'), axis.text.x = element_text(size = a, face = 'bold'), axis.text.y = element_text(size = a, face = 'bold'), axis.title = element_text(size = a, face = 'bold')) #legend.position = 'none',
+dev.off()
+```
